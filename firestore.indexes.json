@@ -10,7 +10,7 @@
         },
         {
           "fieldPath": "__name__",
-          "order": "DESCENDING"
+          "order": "ASCENDING"
         }
       ]
     },
@@ -19,7 +19,39 @@
       "queryScope": "Collection",
       "fields": [
         {
+          "fieldPath": "isFavorite",
+          "order": "DESCENDING"
+        },
+        {
           "fieldPath": "addedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "bookmarks",
+      "queryScope": "Collection",
+      "fields": [
+        {
+          "fieldPath": "bookId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "notes",
+      "queryScope": "Collection",
+      "fields": [
+        {
+          "fieldPath": "bookId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
           "order": "DESCENDING"
         }
       ]

@@ -1,0 +1,19 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+node_modules/
+.android/
+.ios/
+.expo/
+.DS_Store
+*.log
+coverage/
+.vscode/
+.bundle/
+android/app/build/
+android/build/
+ios/Pods/
+ios/build/
+*.keystore
+*.jks
+.env
+.env.*

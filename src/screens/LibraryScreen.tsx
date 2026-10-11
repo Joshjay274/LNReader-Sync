@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { useAuthStore } from '../store/useAppStore';
 import { theme } from '../theme';
 import BookCard from '../components/BookCard';
 
@@ -40,23 +41,86 @@ const MOCK_LIBRARY = [
     lastReadAt: '2026-10-08',
     isFavorite: true,
   },
+  {
+    id: 'book-4',
+    title: 'Echoes of Tomorrow',
+    author: 'Alex Chen',
+    cover: 'https://images.unsplash.com/photo-150784272343-583f20270319?auto=format&fit=crop&w=400&q=80',
+    genre: 'Adventure',
+    chapters: 50,
+    currentChapter: 5,
+    progress: 10,
+    lastReadAt: '2026-10-01',
+    isFavorite: false,
+  },
 ];
 
 export default function LibraryScreen() {
-  const [books, setBooks] = useState(MOCK_LIBRARY);
+  const { library, setLibrary } = useAuthStore();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState<'all' | 'favorites' | 'reading' | 'completed'>('all');
+
+  const displayLibrary = library.length > 0 ? library : MOCK_LIBRARY;
+
+  const filteredBooks = displayLibrary.filter(book => {
+    const matchesSearch =
+      book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      book.author.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (filter === 'favorites') return matchesSearch && book.isFavorite;
+    if (filter === 'reading') return matchesSearch && book.progress < 100 && book.progress > 0;
+    if (filter === 'completed') return matchesSearch && book.progress === 100;
+    return matchesSearch;
+  });
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Library</Text>
-      <FlatList
-        data={books}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => <BookCard key={item.id} book={item} />}
-        contentContainerStyle={{ paddingBottom: 24 }}
+      <View style={styles.header}>
+        <Text style={styles.title}>Library</Text>
+        <Text style={styles.count}>{filteredBooks.length} books</Text>
+      </View>
+
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Search books..."
+        placeholderTextColor={theme.colors.textSecondary}
+        value={searchQuery}
+        onChangeText={setSearchQuery}
       />
-      <TouchableOpacity style={styles.button} onPress={() => setBooks([...books].reverse())}>
-        <Text style={styles.buttonText}>Refresh</Text>
-      </TouchableOpacity>
+
+      <View style={styles.filterRow}>
+        {(['all', 'favorites', 'reading', 'completed'] as const).map(f => (
+          <TouchableOpacity
+            key={f}
+            style={[
+              styles.filterButton,
+              filter === f && styles.filterButtonActive,
+            ]}
+            onPress={() => setFilter(f)}
+          >
+            <Text
+              style={[
+                styles.filterText,
+                filter === f && styles.filterTextActive,
+              ]}
+            >
+              {f.charAt(0).toUpperCase() + f.slice(1)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <FlatList
+        data={filteredBooks}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => <BookCard book={item} />}
+        contentContainerStyle={styles.listContent}
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>No books found</Text>
+          </View>
+        }
+      />
     </View>
   );
 }
@@ -65,23 +129,72 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-    padding: 20,
+    paddingTop: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 16,
   },
   title: {
     color: theme.colors.text,
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '800',
-    marginBottom: 18,
   },
-  button: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: 14,
+  count: {
+    color: theme.colors.textSecondary,
+    fontSize: 14,
+  },
+  searchInput: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 12,
+    color: theme.colors.text,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
-  buttonText: {
+  filterRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+    gap: 8,
+  },
+  filterButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  filterButtonActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  filterText: {
+    color: theme.colors.textSecondary,
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  filterTextActive: {
     color: '#fff',
-    fontWeight: '700',
+  },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  empty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyText: {
+    color: theme.colors.textSecondary,
+    fontSize: 16,
   },
 });

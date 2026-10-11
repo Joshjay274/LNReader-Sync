@@ -1,0 +1,28 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "readingProgress",
+      "queryScope": "Collection",
+      "fields": [
+        {
+          "fieldPath": "lastReadAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "library",
+      "queryScope": "Collection",
+      "fields": [
+        {
+          "fieldPath": "addedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ]
+}

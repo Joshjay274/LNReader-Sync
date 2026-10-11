@@ -26,3 +26,31 @@ export type ReadingProgressEntry = {
   progress: number;
   lastReadAt: string;
 };
+
+export type Bookmark = {
+  id: string;
+  bookId: string;
+  chapterId: string;
+  position: number;
+  note?: string;
+  createdAt: string;
+};
+
+export type Note = {
+  id: string;
+  bookId: string;
+  chapterId: string;
+  content: string;
+  position: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type UserSettings = {
+  theme: 'light' | 'dark' | 'auto';
+  fontSize: number;
+  fontFamily: string;
+  lineHeight: number;
+  autoSync: boolean;
+  autoBackup: boolean;
+};

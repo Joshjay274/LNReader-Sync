@@ -1,20 +1,28 @@
 {
-  "name": "LNReader-Sync",
+  "name": "lnreader-sync",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
+    "android:dev": "react-native run-android --variant=debug",
+    "android:release": "cd android && ./gradlew assembleRelease && cd ..",
+    "android:signed": "cd android && ./gradlew bundleRelease && cd ..",
+    "build:apk": "bash scripts/build-apk.sh",
+    "sign:apk": "bash scripts/sign-apk.sh",
+    "install:apk": "bash scripts/install-apk.sh",
     "ios": "react-native run-ios",
     "start": "react-native start",
     "test": "jest",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*\"'
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.23.1",
     "@react-native-firebase/app": "^21.0.0",
     "@react-native-firebase/auth": "^21.0.0",
     "@react-native-firebase/firestore": "^21.0.0",
+    "@react-native-firebase/storage": "^21.0.0",
     "@react-native-google-signin/google-signin": "^13.0.0",
     "@react-navigation/bottom-tabs": "^6.1.0",
     "@react-navigation/native": "^6.1.0",
@@ -23,6 +31,7 @@
     "react-native": "0.73.5",
     "react-native-safe-area-context": "^4.5.0",
     "react-native-screens": "^3.15.0",
+    "uuid": "^9.0.0",
     "zustand": "^4.7.0"
   },
   "devDependencies": {

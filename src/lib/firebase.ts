@@ -1,6 +1,6 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getFirestore, type Firestore, enableIndexedDbPersistence, enableMultiTabIndexedDbPersistence } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
@@ -19,3 +19,12 @@ export const db: Firestore | null = firebaseApp ? getFirestore(firebaseApp) : nu
 export const googleProvider = auth ? new GoogleAuthProvider() : null;
 
 export const isFirebaseConfigured = hasFirebaseConfig;
+
+if (db) {
+  enableMultiTabIndexedDbPersistence(db).catch((err) => {
+    console.warn('Multi-tab persistence failed; trying single-tab persistence:', err?.message || err);
+    enableIndexedDbPersistence(db).catch((innerErr) => {
+      console.warn('IndexedDB persistence failed:', innerErr?.message || innerErr);
+    });
+  });
+}

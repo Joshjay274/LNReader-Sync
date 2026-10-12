@@ -5,11 +5,13 @@ This repository has been converted from the original React Native app into a web
 ## Features
 
 - Google sign-in ready through Firebase
+- Email/password auth ready through Firebase
 - Library dashboard for saved titles
 - Reading progress tracking
 - Note-taking panel for each title
 - Local persistence for offline browsing
 - Firestore sync support when Firebase is configured
+- PWA support for installability and offline shell caching
 
 ## Quick start
 
@@ -58,7 +60,14 @@ Use the same values from your Firebase project:
 - `VITE_FIREBASE_MESSAGING_SENDER_ID`
 - `VITE_FIREBASE_APP_ID`
 
-This app expects Firebase Authentication with Google sign-in enabled.
+This app expects Firebase Authentication with Google sign-in enabled, and supports email/password authentication as an additional option.
+
+## Offline / PWA notes
+
+- The app includes a basic service worker for shell caching.
+- Firestore persistence is enabled when Firebase is configured.
+- The app can install as a PWA on supported browsers.
+- Initial sign-in requires a network connection; after sign-in, the session is cached and offline reads/writes can continue when the browser has access to local persistence.
 
 ## Notes
 

@@ -2,60 +2,29 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth';
 import { collection, doc, onSnapshot, setDoc, type Unsubscribe } from 'firebase/firestore';
 import { auth, db, googleProvider, isFirebaseConfigured } from './lib/firebase';
+import { sampleBooks, type Book } from './data/sampleBooks';
 
-type Book = {
-  id: string;
-  title: string;
-  author: string;
-  chapter: string;
-  progress: number;
-  updatedAt: string;
-  notes: string;
-};
-
-const defaultBooks: Book[] = [
-  {
-    id: 'book-1',
-    title: 'The Last Sword Saint',
-    author: 'A. R. Vale',
-    chapter: 'Chapter 12: The Empty Hall',
-    progress: 72,
-    updatedAt: new Date().toISOString(),
-    notes: 'The duel in the moonlit hall was the turning point.',
-  },
-  {
-    id: 'book-2',
-    title: 'Moonlit Guild',
-    author: 'M. K. Sato',
-    chapter: 'Chapter 8: Glass Contracts',
-    progress: 39,
-    updatedAt: new Date().toISOString(),
-    notes: 'Need to remember the guild master’s final warning.',
-  },
-  {
-    id: 'book-3',
-    title: 'Ashes of the Seventh Tower',
-    author: 'L. H. Thorn',
-    chapter: 'Chapter 5: Signal from Below',
-    progress: 88,
-    updatedAt: new Date().toISOString(),
-    notes: 'The underground chamber hints at a larger conspiracy.',
-  },
-];
-
-const STORAGE_KEY = 'lnreader-sync-books';
+const STORAGE_KEY = 'lnreader-sync-books-v2';
 
 export function App() {
   const [user, setUser] = useState<User | null>(null);
-  const [books, setBooks] = useState<Book[]>(defaultBooks);
-  const [selectedBookId, setSelectedBookId] = useState<string>(defaultBooks[0].id);
+  const [books, setBooks] = useState<Book[]>(sampleBooks);
+  const [selectedBookId, setSelectedBookId] = useState<string>(sampleBooks[0].id);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
 
   const selectedBook = useMemo(
-    () => books.find((book) => book.id === selectedBookId) ?? books[0] ?? defaultBooks[0],
+    () => books.find((book) => book.id === selectedBookId) ?? books[0] ?? sampleBooks[0],
     [books, selectedBookId],
   );
+
+  const selectedChapter =
+    selectedBook.chapters[selectedBook.currentChapterIndex] ?? selectedBook.chapters[0];
+
+  const chapterProgress = useMemo(() => {
+    if (selectedBook.chapters.length === 0) return 0;
+    return Math.round(((selectedBook.currentChapterIndex + 1) / selectedBook.chapters.length) * 100);
+  }, [selectedBook]);
 
   useEffect(() => {
     const savedBooks = localStorage.getItem(STORAGE_KEY);
@@ -149,21 +118,23 @@ export function App() {
     await setDoc(bookRef, nextBook, { merge: true });
   };
 
+  const updateChapter = async (direction: number) => {
+    const currentIndex = selectedBook.currentChapterIndex;
+    const nextIndex = Math.min(
+      Math.max(currentIndex + direction, 0),
+      selectedBook.chapters.length - 1,
+    );
+
+    await saveBookUpdate({ currentChapterIndex: nextIndex });
+  };
+
   const incrementProgress = async () => {
-    const nextProgress = Math.min(selectedBook.progress + 5, 100);
-    await saveBookUpdate({ progress: nextProgress });
+    const nextIndex = Math.min(selectedBook.currentChapterIndex + 1, selectedBook.chapters.length - 1);
+    await saveBookUpdate({ currentChapterIndex: nextIndex });
   };
 
   const updateNotes = async (notes: string) => {
     await saveBookUpdate({ notes });
-  };
-
-  const updateCurrentChapter = async () => {
-    const nextChapter = selectedBook.chapter.includes('Chapter')
-      ? selectedBook.chapter.replace(/Chapter \d+/, `Chapter ${Number(selectedBook.chapter.match(/\d+/)?.[0] ?? 1) + 1}`)
-      : 'Chapter 2';
-
-    await saveBookUpdate({ chapter: nextChapter });
   };
 
   if (loading) {
@@ -214,7 +185,7 @@ export function App() {
               <div className="book-meta">
                 <strong>{book.title}</strong>
                 <span>{book.author}</span>
-                <small>{book.progress}% read</small>
+                <small>{Math.round(((book.currentChapterIndex + 1) / book.chapters.length) * 100)}% read</small>
               </div>
             </button>
           ))}
@@ -226,34 +197,56 @@ export function App() {
               <p className="eyebrow">Current title</p>
               <h2>{selectedBook.title}</h2>
             </div>
-            <div className="status-pill">{selectedBook.progress}%</div>
+            <div className="status-pill">{chapterProgress}%</div>
           </div>
 
           <div className="progress-wrapper">
             <div className="progress-bar">
-              <span style={{ width: `${selectedBook.progress}%` }} />
+              <span style={{ width: `${chapterProgress}%` }} />
             </div>
           </div>
 
           <div className="reader-actions">
-            <button className="secondary-button" onClick={incrementProgress}>Mark progress +5%</button>
-            <button className="secondary-button" onClick={updateCurrentChapter}>Next chapter</button>
+            <button
+              className="secondary-button"
+              onClick={() => updateChapter(-1)}
+              disabled={selectedBook.currentChapterIndex === 0}
+            >
+              Previous chapter
+            </button>
+            <button className="secondary-button" onClick={incrementProgress}>
+              Mark progress +1 chapter
+            </button>
+            <button
+              className="secondary-button"
+              onClick={() => updateChapter(1)}
+              disabled={selectedBook.currentChapterIndex >= selectedBook.chapters.length - 1}
+            >
+              Next chapter
+            </button>
           </div>
 
           <article className="chapter-card">
-            <p className="eyebrow">Read chapter</p>
-            <h3>{selectedBook.chapter}</h3>
-            <p>
-              The old tower had forgotten how to hold sunlight. Every stair led downward, and every step felt like a
-              promise from the past. The guild’s seal still glimmered on the stone, and for the first time in months,
-              the silence sounded like a warning.
-            </p>
-            <p>
-              The protagonist moved carefully, testing the shape of the next room as if the air itself might betray the
-              truth. Somewhere above, bells rang once and stopped. There was a word in the dust that no one was supposed
-              to remember.
-            </p>
+            <p className="eyebrow">Reading</p>
+            <h3>{selectedChapter.title}</h3>
+            {selectedChapter.content.map((paragraph, index) => (
+              <p key={`${selectedChapter.id}-${index}`}>{paragraph}</p>
+            ))}
           </article>
+
+          <div className="chapter-list">
+            {selectedBook.chapters.map((chapter, index) => (
+              <button
+                key={chapter.id}
+                className={`chapter-item ${index === selectedBook.currentChapterIndex ? 'current' : ''}`}
+                onClick={async () => {
+                  await saveBookUpdate({ currentChapterIndex: index });
+                }}
+              >
+                {chapter.title}
+              </button>
+            ))}
+          </div>
 
           <div className="notes-card">
             <div className="section-header compact">

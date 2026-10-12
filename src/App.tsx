@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth';
+import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { collection, doc, onSnapshot, setDoc, type Unsubscribe } from 'firebase/firestore';
-import { auth, db, googleProvider, isFirebaseConfigured } from './lib/firebase';
+import { auth, db, isFirebaseConfigured } from './lib/firebase';
+import Auth from './components/Auth';
 import { sampleBooks, type Book } from './data/sampleBooks';
 
 const STORAGE_KEY = 'lnreader-sync-books-v2';
@@ -86,20 +87,6 @@ export function App() {
     return () => unsubscribe();
   }, [user]);
 
-  const handleGoogleSignIn = async () => {
-    if (!auth || !googleProvider) {
-      setError('Firebase is not configured yet. Add your VITE_FIREBASE_* values to a .env file.');
-      return;
-    }
-
-    try {
-      setError('');
-      await signInWithPopup(auth, googleProvider);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google sign-in failed.');
-    }
-  };
-
   const handleSignOut = async () => {
     if (!auth) return;
     await signOut(auth);
@@ -141,6 +128,23 @@ export function App() {
     return <div className="screen loading-screen">Loading your reading dashboard...</div>;
   }
 
+  if (!user) {
+    return (
+      <div className="app-shell">
+        <header className="topbar">
+          <div>
+            <p className="eyebrow">LNReader Sync</p>
+            <h1>Web reading dashboard</h1>
+          </div>
+        </header>
+
+        <main style={{ display: 'grid', placeItems: 'center', minHeight: '60vh' }}>
+          <Auth />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -149,15 +153,9 @@ export function App() {
           <h1>Web reading dashboard</h1>
         </div>
 
-        {user ? (
-          <button className="primary-button" onClick={handleSignOut}>
-            Sign out
-          </button>
-        ) : (
-          <button className="primary-button" onClick={handleGoogleSignIn} disabled={!isFirebaseConfigured}>
-            {isFirebaseConfigured ? 'Continue with Google' : 'Firebase not configured'}
-          </button>
-        )}
+        <button className="primary-button" onClick={handleSignOut}>
+          Sign out
+        </button>
       </header>
 
       {error ? <div className="status-banner error-banner">{error}</div> : null}
